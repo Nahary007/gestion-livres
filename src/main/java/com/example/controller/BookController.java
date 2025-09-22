@@ -3,7 +3,7 @@ package com.example.controller;
 import com.example.entity.Book;
 import com.example.entity.Author;
 import com.example.entity.Book.BookStatus;
-import com.example.service.BookService;
+import com.example.Service.BookService;
 import jakarta.annotation.PostConstruct;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
