@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+    
+    <h:head>
+        <title>Gestion des Livres</title>
+        <h:outputStylesheet name="css/style.css"/>
+    </h:head>
+    
+    <h:body>
+        <div class="container">
+            <h1>📚 Gestion des Livres</h1>
+            
+            <!-- Messages -->
+            <p:growl id="messages" showDetail="true" life="5000"/>
+            
+            <!-- Formulaire de recherche -->
+            <h:form id="searchForm">
+                <div class="search-panel">
+                    <p:inputText value="#{bookController.searchKeyword}" 
+                               placeholder="Rechercher un livre..." 
+                               styleClass="search-input"/>
+                    <p:commandButton value="🔍 Rechercher" 
+                                   action="#{bookController.search()}"
+                                   styleClass="btn btn-primary"/>
+                    <p:commandButton value="🔄 Réinitialiser" 
+                                   action="#{bookController.loadBooks()}"
+                                   styleClass="btn btn-secondary"/>
+                </div>
+            </h:form>
+            
+            <!-- Bouton d'ajout -->
+            <h:form>
+                <p:commandButton value="➕ Nouveau Livre" 
+                               action="#{bookController.prepareCreate()}"
+                               oncomplete="PF('bookDialog').show()"
+                               styleClass="btn btn-success"/>
+            </h:form>
+            
+            <!-- Tableau des livres -->
+            <h:form id="booksForm">
+                <p:dataTable id="booksTable" value="#{bookController.books}" var="book"
+                           paginator="true" rows="10" paginatorPosition="bottom"
+                           paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                           rowsPerPageTemplate="5,10,15,20" emptyMessage="Aucun livre trouvé"
+                           styleClass="books-table" rowStyleClass="book-row">
+                    
+                    <p:column headerText="ID" sortBy="#{book.id}" width="60">
+                        <h:outputText value="#{book.id}"/>
+                    </p:column>
+                    
+                    <p:column headerText="Titre" sortBy="#{book.title}" filterBy="#{book.title}">
+                        <h:outputText value="#{book.title}"/>
+                    </p:column>
+                    
+                    <p:column headerText="Auteur" sortBy="#{book.author.fullName}">
+                        <h:outputText value="#{book.author.fullName}"/>
+                    </p:column>
+                    
+                    <p:column headerText="ISBN" width="140">
+                        <h:outputText value="#{book.isbn}"/>
+                    </p:column>
+                    
+                    <p:column headerText="Prix" sortBy="#{book.price}" width="100">
+                        <h:outputText value="#{book.formattedPrice}"/>
+                    </p:column>
+                    
+                    <p:column headerText="Statut" width="120">
+                        <p:tag value="#{book.status}" 
+                              severity="#{book.status == 'AVAILABLE' ? 'success' : 
+                                        book.status == 'BORROWED' ? 'danger' : 
+                                        book.status == 'RESERVED' ? 'warning' : 'info'}"/>
+                    </p:column>
+                    
+                    <p:column headerText="Actions" width="120" style="text-align: center;">
+                        <p:commandButton icon="pi pi-pencil" title="Modifier"
+                                       oncomplete="PF('bookDialog').show()"
+                                       action="#{bookController.prepareEdit(book.id)}"
+                                       styleClass="btn-edit"/>
+                        
+                        <p:commandButton icon="pi pi-trash" title="Supprimer"
+                                       action="#{bookController.delete(book.id)}"
+                                       update="messages,booksTable"
+                                       styleClass="btn-delete"
+                                       onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce livre?')"/>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+            
+            <!-- Dialogue d'édition -->
+            <p:dialog header="Livre" widgetVar="bookDialog" modal="true" resizable="false"
+                    width="600" height="auto" closable="true" draggable="true">
+                <h:form id="bookForm">
+                    <p:panelGrid columns="2" layout="grid" styleClass="panel-grid">
+                        <p:outputLabel for="title" value="Titre: *"/>
+                        <p:inputText id="title" value="#{bookController.book.title}" 
+                                   required="true" requiredMessage="Le titre est obligatoire"
+                                   maxlength="200" style="width: 100%"/>
+                        
+                        <p:outputLabel for="author" value="Auteur: *"/>
+                        <p:selectOneMenu id="author" value="#{bookController.book.author}" 
+                                       required="true" requiredMessage="L'auteur est obligatoire"
+                                       style="width: 100%">
+                            <f:selectItem itemLabel="Sélectionnez un auteur..." itemValue=""/>
+                            <f:selectItems value="#{bookController.authors}" var="auth" 
+                                         itemLabel="#{auth.fullName}" itemValue="#{auth}"/>
+                        </p:selectOneMenu>
+                        
+                        <p:outputLabel for="isbn" value="ISBN: *"/>
+                        <p:inputText id="isbn" value="#{bookController.book.isbn}" 
+                                   required="true" requiredMessage="L'ISBN est obligatoire"
+                                   maxlength="20" style="width: 100%"/>
+                        
+                        <p:outputLabel for="price" value="Prix: *"/>
+                        <p:inputNumber id="price" value="#{bookController.book.price}" 
+                                     required="true" requiredMessage="Le prix est obligatoire"
+                                     minValue="0.01" maxValue="10000" decimalPlaces="2"
+                                     symbol="€" style="width: 100%"/>
+                        
+                        <p:outputLabel for="pageCount" value="Nombre de pages:"/>
+                        <p:inputNumber id="pageCount" value="#{bookController.book.pageCount}" 
+                                     minValue="1" maxValue="10000" integerOnly="true"
+                                     style="width: 100%"/>
+                        
+                        <p:outputLabel for="publicationDate" value="Date de publication:"/>
+                        <p:calendar id="publicationDate" value="#{bookController.book.publicationDate}" 
+                                  pattern="dd/MM/yyyy" navigator="true" yearRange="c-200:c+0"
+                                  style="width: 100%"/>
+                        
+                        <p:outputLabel for="status" value="Statut:"/>
+                        <p:selectOneMenu id="status" value="#{bookController.book.status}" 
+                                       style="width: 100%">
+                            <f:selectItems value="#{bookController.statuses}" var="status" 
+                                         itemLabel="#{status}" itemValue="#{status}"/>
+                        </p:selectOneMenu>
+                        
+                        <p:outputLabel for="description" value="Description:"/>
+                        <p:inputTextarea id="description" value="#{bookController.book.description}" 
+                                       rows="4" maxlength="1000" style="width: 100%"/>
+                    </p:panelGrid>
+                    
+                    <div class="dialog-buttons">
+                        <p:commandButton value="💾 Enregistrer" action="#{bookController.save()}"
+                                       update="messages,booksForm:booksTable" 
+                                       oncomplete="if(!args.validationFailed) PF('bookDialog').hide()"
+                                       styleClass="btn btn-success"/>
+                        <p:commandButton value="❌ Annuler" onclick="PF('bookDialog').hide()" 
+                                       immediate="true" styleClass="btn btn-secondary"/>
+                    </div>
+                </h:form>
+            </p:dialog>
+        </div>
+    </h:body>
+</html>
