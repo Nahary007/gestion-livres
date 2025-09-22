@@ -4,11 +4,12 @@ import jakarta.persistence.*;
 
 import java.io.Serializable;
 import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Pattern;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
 
-import org.hibernate.annotations.processing.Pattern;
+// import org.hibernate.annotations.processing.Pattern;
 
 @Entity
 @Table(name= "books")
